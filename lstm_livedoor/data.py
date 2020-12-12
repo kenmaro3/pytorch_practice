@@ -15,6 +15,7 @@ import torch.nn as nn
 from sklearn.model_selection import train_test_split
 from sklearn.utils import shuffle
 import torch.optim as optim
+from torch.utils.data import DataLoader, Dataset
 
 from model import LSTMClassifier
 
@@ -55,6 +56,28 @@ def get_title():
 
     return datasets
 
+def get_title_as_list():
+    categories = [name for name in os.listdir("text") if os.path.isdir("text/" + name)]
+    #print(categories)
+
+    categories_test = categories[:3]
+
+    titles = []
+    categories = []
+
+    for cat in categories_test:
+        path = "text/" + cat + "/*.txt"
+        files = glob(path)
+        for text_name in files:
+            title = linecache.getline(text_name, 3)
+            #print(title)
+            titles.append(title)
+            categories.append(categories)
+
+
+    return titles, categories 
+
+
 
 def sentence2index(sentence, word2index):
     wakati = make_wakati(sentence)
@@ -74,6 +97,19 @@ def train2batch(title, category, batch_size=100):
         category_batch.append(category_shuffle[i:i+batch_size])
     return title_batch, category_batch
 
+
+class MyDataManager(Dataset):
+    def __init__(self, ds, ls):
+        super(MyDataManager, self).__init__()
+        self.ds = ds
+        self.ls = ls
+
+    def __getitem__(self, idx):
+        return self.ds[idx], self.ls[idx]
+
+
+    def __len__(self):
+        return len(self.ds)
 
 
 
@@ -159,18 +195,48 @@ if __name__ == "__main__":
 
 
 
-
+    # prepare the data
     traindata, testdata = train_test_split(datasets, train_size=0.7)
 
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    print("traindata")
+    print(len(traindata))
+    print(type(traindata))
+    print(traindata.head())
+    print(traindata.iloc[0])
 
+    #train_datasets = MyDataManager(traindata["title"], traindata["category"])
+    #test_datasets = MyDataManager(testdata["title"], testdata["category"])
+
+    #train_kwargs = {"shuffle":True, "batch_size": 32}
+    #test_kwargs = {"batch_size": 32}
+
+    #train_dataloader = DataLoader(train_datasets, **train_kwargs)
+    #test_dataloader = DataLoader(test_datasets, **test_kwargs)
+
+    # training 
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     tag_size = len(categories)
     model = LSTMClassifier(embedding_dim, hidden_dim, vocab_size, tag_size).to(device)
     epochs = 5
     optimizer = optim.Adam(model.parameters(), lr = 0.01)
     loss_function = nn.NLLLoss()
 
-    losses = []
+
+    #for epoch in range(epochs):
+    #    for i, (data, target) in enumerate(train_dataloader):
+    #        batch_loss = 0
+    #        model.zero_grad()
+    #        out = model(data)
+    #        batch_loss = loss_function(out, category_tensor)
+    #        batch_loss.backward()
+    #        optimizer.step()
+    #        all_loss += batch_loss.item()
+
+    #    print("epoch", epoch, "\t", "loss", all_loss)
+    #    if all_loss < 0.1: break
+    #print("done with dataloder.")
+
+
     for epoch in range(epochs):
         all_loss = 0
         title_batch, category_batch = train2batch(train_x, train_y)
@@ -178,14 +244,11 @@ if __name__ == "__main__":
             batch_loss = 0
 
             model.zero_grad()
-
             # pass device=GPU to inference the tensor with GPU
             title_tensor = torch.zeros(len(title_batch[i]), title_batch[i][0].size()[0]).long()
             for j in range(len(title_tensor)):
                 title_tensor[j, :] = title_batch[i][j]
-
             #title_tensor = torch.tensor(title_batch[i], device=device)
-
             # category_tensor.size() = (batch_size * 1) , so squeeze()
             category_tensor = torch.tensor(category_batch[i], device=device).squeeze()
 
