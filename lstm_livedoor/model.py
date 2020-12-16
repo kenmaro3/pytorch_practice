@@ -29,10 +29,16 @@ class LSTMClassifier(nn.Module):
 
 
     def forward(self, sentence):
+        # sentence.size() = (batch, seq_len, word_idx)
+        # embeds.size() = (batch, seq_len, hidden_dim)
         embeds = self.word_embeddings(sentence)
-
+        
         # embeds.size() = (batch_size * len(sentence) * embedding_dim)
         #embeds = embeds.view(embeds.size()[0], 1, embeds.size()[1])
+
+        # _.size() = (batch, seq_len, num_directions*hidden_size)
+        # lstm_out_h.size() = (batch, num_layers*num_directions, hidden_size)
+        # lstm_out_c.size() = (batch, num_layers*num_directions, hidden_size)
         _, (lstm_out_h, lstm_out_c) = self.lstm(embeds)
         #tag_space = self.hidden2tag(lstm_out_h.view(-1, self.hidden_dim))
 
