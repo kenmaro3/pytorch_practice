@@ -1,3 +1,5 @@
+import itertools 
+
 import torch
 import torch.nn as nn
 import torch.optim as optim
@@ -24,6 +26,7 @@ from model import *
 import matplotlib.pyplot as plt
 
 from transfer_alex import MyModel
+from food_like_model import TestModel
 
 class MyDataManager(Dataset):
     def __init__(self, ds, ls):
@@ -32,7 +35,7 @@ class MyDataManager(Dataset):
         self.ls = ls
 
         self.transform = transforms.Compose([
-            transforms.Resize((224, 224)),
+            transforms.Resize((128, 128)),
             transforms.ToTensor(),
         ])
 
@@ -119,35 +122,53 @@ def test(model, test_loader, criterion, device):
 
 if __name__ == "__main__":
     print("test")
-    target_list = ["n02094114-Norfolk_terrier", "n02094258-Norwich_terrier"]
+
 
     train_path = "./Images"
 
-    target_files = [os.listdir(osp(train_path, target)) for target in target_list]
+    target_list = os.listdir(train_path)
+    print(len(target_list))
+    print(target_list)
+   
+    #target_list = ["n02094114-Norfolk_terrier", "n02094258-Norwich_terrier"]
+    
+    test_size=100
+    tmp1 = []
+    for i, target in enumerate(target_list[:test_size]):
+      file_list = os.listdir(osp(train_path, target))
+      file_list2 = [osp(train_path, target, file_) for file_ in file_list]
 
-    ds = []
-    target_full_path1 = [osp(train_path, target_list[0], file) for file in target_files[0]]
-    target_full_path2 = [osp(train_path, target_list[1], file) for file in target_files[1]]
+      tmp1.append(file_list2)
 
-    ds = target_full_path1 + target_full_path2
+    print(len(tmp1))
+    print(len(tmp1[0]))
 
-    print(len(ds))
-    print(ds[0])
+    #target_files = [osp(train_path, target, os.listdir(osp(train_path, target))) for target in target_list]
+    print(tmp1[0][0])
 
-    #visualize(ds, 0)
-
-    total_length = len(target_files[0]) + len(target_files[1])
-
-    ls = np.zeros(total_length, dtype=np.int64)
-    for i in range(len(target_files[0])):
-        ls[i] = 1
-
-    #ls = torch.zeros(total_length, dtype=torch.long)
-    #for i in range(len(target_files[0])):
-    #    ls[i] = 1
+    tmp2 = []
+    for i in range(len(tmp1)):
+      tmp3 = []
+      for j in range(len(tmp1[i])):
+        tmp3.append(i)
+      tmp2.append(tmp3)
 
 
-    #ls = torch.LongTensor(ls)
+    print(len(tmp2))
+    print(len(tmp2[0]))
+    
+    ds = list(itertools.chain.from_iterable(tmp1))
+    ls = list(itertools.chain.from_iterable(tmp2))
+    #print(ds)
+    #print(ls)
+    
+    ls_np = np.zeros(len(ls), dtype=np.int64)
+    for i in range(len(ls)):
+      ls_np[i] = ls[i]
+
+    print(ls_np)
+
+    ##ls = torch.LongTensor(ls)
 
 
     train_kwargs = dict(
@@ -159,16 +180,16 @@ if __name__ == "__main__":
         batch_size=12
     )
 
-    print("here000")
-    print(type(ds))
-    print(len(ds))
-    print(type(ls))
-    print(len(ls))
+    #print("here000")
+    #print(type(ds))
+    #print(len(ds))
+    #print(type(ls))
+    #print(len(ls))
 
 
     train_x, test_x, train_y, test_y = train_test_split(ds, ls, test_size=0.2)
-    
-    print("here1111")
+    #
+    #print("here1111")
 
     train_dataset = MyDataManager(train_x, train_y)
     test_dataset = MyDataManager(test_x, test_y)
@@ -178,38 +199,44 @@ if __name__ == "__main__":
 
 
     device = torch.device('cpu')
-    #model = MyNet().to(device)
+
+    model = TestModel(len(tmp1)).to(device)
+
+    #test = torch.randn(1, 3, 224, 224)
+
+    #output = model(test)
+    ##model = MyNet().to(device)
     #model = MyModel(9216, 2).to(device)
 
-    model = torch.hub.load('pytorch/vision:v0.6.0', 'alexnet', pretrained=True)
+    #model = torch.hub.load('pytorch/vision:v0.6.0', 'alexnet', pretrained=True)
 
-    for param in model.parameters():
-      param.requires_grad = False
+    #for param in model.parameters():
+    #  param.requires_grad = False
 
-    model.classifier = nn.Sequential(
-      nn.Linear(9216, 2048),
-      nn.ReLU(inplace=True),
-      nn.Dropout(0.4),
-      nn.Linear(2048, 2),
-      nn.LogSoftmax(dim=1)
-    )
+    #model.classifier = nn.Sequential(
+    #  nn.Linear(9216, 2048),
+    #  nn.ReLU(inplace=True),
+    #  nn.Dropout(0.4),
+    #  nn.Linear(2048, 2),
+    #  nn.LogSoftmax(dim=1)
+    #)
 
     optimizer = optim.Adam(model.parameters())
 
 
     criterion = nn.CrossEntropyLoss()
-    #criterion = nn.NLLLoss()
+    ##criterion = nn.NLLLoss()
 
-    #test = torch.randn(1, 3, 224, 224)
+    ##test = torch.randn(1, 3, 224, 224)
 
-    #target = torch.LongTensor([1]) 
+    ##target = torch.LongTensor([1]) 
 
-    #output = model(test)
+    ##output = model(test)
 
-    #print(output.size())
+    ##print(output.size())
 
-    #loss = criterion(output, target)
-    #print(loss.item())
+    ##loss = criterion(output, target)
+    ##print(loss.item())
 
     epochs = 100
     log_interval = 10
@@ -218,6 +245,8 @@ if __name__ == "__main__":
     for e in range(epochs):
         train(model, train_loader, optimizer, criterion, device, log_interval, e)
         test(model, test_loader, criterion, device)
+        if e % 1 == 0:
+          torch.save(model, f'test_model_epoch_{e}.pth')
 
 
 
