@@ -22,20 +22,30 @@ if __name__ == "__main__":
     machine_type = 'cuda' if torch.cuda.is_available() else 'cpu'
     print(f'machiine_type >>> {machine_type}')
     device = torch.device(machine_type)
+    
 
-    print("model")
     model = TestModel(num_labels).to(device)
+    print(f'loaded model >>> {model}')
     optimizer = optim.Adam(model.parameters())
+    print(f'optimizer >>> {optimizer}')
 
 
     criterion = nn.CrossEntropyLoss()
     #criterion = nn.NLLLoss()
+    print(f'criterion >>> {criterion}')
 
-    epochs = 100
+    epochs = 200
     log_interval = 10
     #scheduler = StepLR(optimizer, step_size=30, gamma=0.1)
     scheduler = CosineAnnealingLR(optimizer, epochs)
 
+    print(f'epochs >>> {epochs}')
+    print(f'log_interval >>> {log_interval}')
+    print(f'scheduler >>> {scheduler}')
+
+
+
+    print(f'\ntrain start...')
     for e in range(epochs):
         train(model, train_loader, optimizer, criterion, device, log_interval, e)
         test(model, test_loader, criterion, device)
