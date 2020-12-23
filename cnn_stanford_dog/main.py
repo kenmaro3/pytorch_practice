@@ -26,7 +26,7 @@ if __name__ == "__main__":
 
     model = TestModel(num_labels).to(device)
     print(f'loaded model >>> {model}')
-    optimizer = optim.Adam(model.parameters())
+    optimizer = optim.Adam(model.parameters(), lr=0.1)
     print(f'optimizer >>> {optimizer}')
 
 
@@ -51,7 +51,7 @@ if __name__ == "__main__":
         test(model, test_loader, criterion, device)
         if e % 10 == 0:
           torch.save(model, f'test_model_epoch_{e}.pth')
-          print(f'{e} th iteration done. now we have lr as >>> {scheduler.get_lr()}')
+          print(f'{e} th iteration done. now we have lr as >>> {scheduler.get_last_lr()}')
 
 
 
