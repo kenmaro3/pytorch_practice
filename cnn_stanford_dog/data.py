@@ -35,8 +35,10 @@ class MyDataManager(Dataset):
         self.ls = ls
 
         self.transform = transforms.Compose([
-            transforms.Resize((128, 128)),
+            #transforms.Resize((128, 128)),
+            transforms.Resize((224,224)),
             transforms.ToTensor(),
+            transforms.Normalize([.5,.5,.5], [.5,.5,.5]),
         ])
 
     def __getitem__(self, idx):
@@ -182,7 +184,7 @@ def dispense_dataloader_specific(num_labels):
 
 def dispense_dataloader_special():
 
-    train_path = "./data/data_for_sikibetu"
+    train_path = "./data_for_sikibetu"
 
     target_list = os.listdir(train_path)
 
