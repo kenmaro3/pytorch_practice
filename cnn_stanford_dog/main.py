@@ -14,12 +14,13 @@ if __name__ == "__main__":
 
     print("test")
 
-    num_labels=100
+    num_labels=120
 
     train_loader, test_loader = dispense_dataloader_specific(num_labels=num_labels)
 
 
     machine_type = 'cuda' if torch.cuda.is_available() else 'cpu'
+    print(f'machiine_type >>> {machine_type}')
     device = torch.device(machine_type)
 
     print("model")

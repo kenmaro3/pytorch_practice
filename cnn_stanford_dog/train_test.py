@@ -1,3 +1,4 @@
+import torch
 
 def train(model, train_loader,optimizer, criterion, device, log_interval, epoch_idx):
     model.train()
