@@ -62,89 +62,22 @@ def visualize(ds, idx):
 
 
 
-def train(model, train_loader,optimizer, criterion, device, log_interval, epoch_idx):
-    model.train()
-    for i, (data, target) in enumerate(train_loader):
-        data = data.to(device)
-        target = target.to(device)
-        optimizer.zero_grad()
-        output = model(data)
-        loss = criterion(output, target)
-        loss.backward()
-        optimizer.step()
 
-
-        if i % log_interval == 0:
-            print(
-                    "train epoch: {} [{}/{} ({:.0f}%)] \tLoss: {:.6f}".format(
-                        epoch_idx,
-                        i * len(data),
-                        len(train_loader.dataset),
-                        100.0 * i /len(train_loader),
-                        loss.item()
-                        )
-            )
-
-def test(model, test_loader, criterion, device):
-    model.eval()
-    test_loss = 0
-    correct = 0
-
-    with torch.no_grad():
-        for data, target in test_loader:
-            data, target = data.to(device), target.to(device)
-            output = model(data)
-            test_loss += criterion(output, target)
-
-            prediction = output.argmax(dim=1, keepdim=True)
-
-            correct += prediction.eq(target.view_as(prediction)).sum().item()
-
-        test_loss /= len(test_loader.dataset)
-
-        print(
-            "\nTest set: average loss: {:.4f}, accuracy: {}/{} ({:.0f}%)\n".format(
-                test_loss,
-                correct,
-                len(test_loader.dataset),
-                100.0 * correct / len(test_loader.dataset)
-                )
-        )
-
-
-
-
-
-
-
-
-
-
-if __name__ == "__main__":
-    print("test")
-
+def dispense_dataloader(num_labels):
 
     train_path = "./Images"
 
     target_list = os.listdir(train_path)
-    print(len(target_list))
-    print(target_list)
-   
+
     #target_list = ["n02094114-Norfolk_terrier", "n02094258-Norwich_terrier"]
-    
-    test_size=100
+
     tmp1 = []
-    for i, target in enumerate(target_list[:test_size]):
+    for i, target in enumerate(target_list[:num_labels]):
       file_list = os.listdir(osp(train_path, target))
       file_list2 = [osp(train_path, target, file_) for file_ in file_list]
 
       tmp1.append(file_list2)
 
-    print(len(tmp1))
-    print(len(tmp1[0]))
-
-    #target_files = [osp(train_path, target, os.listdir(osp(train_path, target))) for target in target_list]
-    print(tmp1[0][0])
 
     tmp2 = []
     for i in range(len(tmp1)):
@@ -154,22 +87,12 @@ if __name__ == "__main__":
       tmp2.append(tmp3)
 
 
-    print(len(tmp2))
-    print(len(tmp2[0]))
-    
     ds = list(itertools.chain.from_iterable(tmp1))
     ls = list(itertools.chain.from_iterable(tmp2))
-    #print(ds)
-    #print(ls)
-    
+
     ls_np = np.zeros(len(ls), dtype=np.int64)
     for i in range(len(ls)):
       ls_np[i] = ls[i]
-
-    print(ls_np)
-
-    ##ls = torch.LongTensor(ls)
-
 
     train_kwargs = dict(
         batch_size=32,
@@ -180,16 +103,7 @@ if __name__ == "__main__":
         batch_size=12
     )
 
-    #print("here000")
-    #print(type(ds))
-    #print(len(ds))
-    #print(type(ls))
-    #print(len(ls))
-
-
     train_x, test_x, train_y, test_y = train_test_split(ds, ls, test_size=0.2)
-    #
-    #print("here1111")
 
     train_dataset = MyDataManager(train_x, train_y)
     test_dataset = MyDataManager(test_x, test_y)
@@ -197,46 +111,114 @@ if __name__ == "__main__":
     train_loader = DataLoader(train_dataset, **train_kwargs)
     test_loader = DataLoader(test_dataset, **test_kwargs)
 
+    return train_loader, test_loader
 
-    device = torch.device('cpu')
 
-    model = TestModel(len(tmp1)).to(device)
+def dispense_dataloader_specific(num_labels):
 
-    #test = torch.randn(1, 3, 224, 224)
+    train_path = "./Images"
 
-    #output = model(test)
-    ##model = MyNet().to(device)
-    #model = MyModel(9216, 2).to(device)
+    target_list = os.listdir(train_path)
 
-    #model = torch.hub.load('pytorch/vision:v0.6.0', 'alexnet', pretrained=True)
+    target_list_specific = ["n02094114-Norfolk_terrier", "n02094258-Norwich_terrier"]
 
-    #for param in model.parameters():
-    #  param.requires_grad = False
+    tmp1 = []
+    for i, target in enumerate(target_list[:num_labels]):
+      #print(f'target >>> {target}')
+      if target in target_list_specific:
+        print(f'target i >>> {i}')
+      file_list = os.listdir(osp(train_path, target))
+      file_list2 = []
+      for j in range(len(file_list)):
+          if target in target_list_specific:
+              if j == 100:
+                  break
+          file_list2.append(osp(train_path, target, file_list[j]))
+        #file_list2 = [osp(train_path, target, file_) for file_ in file_list]
 
-    #model.classifier = nn.Sequential(
-    #  nn.Linear(9216, 2048),
-    #  nn.ReLU(inplace=True),
-    #  nn.Dropout(0.4),
-    #  nn.Linear(2048, 2),
-    #  nn.LogSoftmax(dim=1)
-    #)
+      tmp1.append(file_list2)
 
+
+    tmp2 = []
+    for i in range(len(tmp1)):
+      tmp3 = []
+      for j in range(len(tmp1[i])):
+        tmp3.append(i)
+      tmp2.append(tmp3)
+
+
+    ds = list(itertools.chain.from_iterable(tmp1))
+    ls = list(itertools.chain.from_iterable(tmp2))
+
+    ls_np = np.zeros(len(ls), dtype=np.int64)
+    for i in range(len(ls)):
+      ls_np[i] = ls[i]
+
+    train_kwargs = dict(
+        batch_size=32,
+        shuffle=True,
+    )
+
+    test_kwargs = dict(
+        batch_size=12
+    )
+
+    train_x, test_x, train_y, test_y = train_test_split(ds, ls, test_size=0.2)
+
+    train_dataset = MyDataManager(train_x, train_y)
+    test_dataset = MyDataManager(test_x, test_y)
+
+    train_loader = DataLoader(train_dataset, **train_kwargs)
+    test_loader = DataLoader(test_dataset, **test_kwargs)
+
+    return train_loader, test_loader
+
+
+def test_run():
+    machine_type = 'cuda' if torch.cuda.is_available() else 'cpu'
+    device = torch.device(machine_type)
+
+    print("model")
+    model = TestModel(num_labels).to(device)
     optimizer = optim.Adam(model.parameters())
 
 
     criterion = nn.CrossEntropyLoss()
-    ##criterion = nn.NLLLoss()
+    #criterion = nn.NLLLoss()
 
-    ##test = torch.randn(1, 3, 224, 224)
+    test = torch.randn(2, 3, 224, 224)
 
-    ##target = torch.LongTensor([1]) 
+    target = torch.LongTensor([2, 1]) 
 
-    ##output = model(test)
+    output = model(test)
 
-    ##print(output.size())
+    print("output size")
+    print(output.size())
+    print(target.size())
 
-    ##loss = criterion(output, target)
-    ##print(loss.item())
+    loss = criterion(output, target)
+    print(loss.item())
+
+
+
+if __name__ == "__main__":
+    print("test")
+
+    num_labels=100
+
+    train_loader, test_loader = dispense_dataloader_specific(num_labels=num_labels)
+
+    
+    machine_type = 'cuda' if torch.cuda.is_available() else 'cpu'
+    device = torch.device(machine_type)
+
+    print("model")
+    model = TestModel(num_labels).to(device)
+    optimizer = optim.Adam(model.parameters())
+
+
+    criterion = nn.CrossEntropyLoss()
+    #criterion = nn.NLLLoss()
 
     epochs = 100
     log_interval = 10
