@@ -40,7 +40,7 @@ def train_mynet_with_four_dataset(cp_folder):
 
     epochs = 300
     log_interval = 10
-    scheduler = StepLR(optimizer, step_size=30, gamma=0.1)
+    scheduler = StepLR(optimizer, step_size=50, gamma=0.1)
     #scheduler = CosineAnnealingLR(optimizer, epochs)
 
     print(f'epochs >>> {epochs}')
@@ -55,7 +55,7 @@ def train_mynet_with_four_dataset(cp_folder):
         test(model, test_loader, criterion, device)
         scheduler.step()
         print(f'{e} th iteration done. now we have lr as >>> {scheduler.get_last_lr()}')
-        if e % 10 == 0:
+        if e % 1 == 0:
           torch.save(model, osp(cp_folder, f'test_model_epoch_{e}.pth'))
 
 
@@ -121,8 +121,9 @@ def transfer_testnet(cp_folder, model_file):
     #model = TestModel(num_labels).to(device)
     #model = torch.hub.load('pytorch/vision:v0.6.0', 'alexnet', pretrained=True)
     model = torch.load(model_file)
-    for param in model.parameters():
-        param.requires_grad = False
+    #for param in model.parameters():
+    #    param.requires_grad = False
+
     model.fc1 = nn.Sequential(
         nn.Linear(256, 64),
         nn.ReLU(),
@@ -228,12 +229,12 @@ if __name__ == "__main__":
     #cp_folder = "cp_testnet_pretrain"
     #train_mynet_with_whole_dataset(cp_folder)
 
-    cp_folder = "cp_alex224_transfer"
-    transfer_alex(cp_folder)
+    #cp_folder = "cp_alex224_transfer"
+    #transfer_alex(cp_folder)
 
     #cp_folder = "cp_mynet_maintrain"
     #model_file = "./cp_mynet_pretrain/test_model_epoch_30.pth"
     #transfer_testnet(cp_folder, model_file)
 
-    #cp_folder = "cp_mynet_normaltrain"
-    #train_mynet_with_four_dataset(cp_folder)
+    cp_folder = "cp_mynet_normaltrain"
+    train_mynet_with_four_dataset(cp_folder)
