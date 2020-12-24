@@ -189,6 +189,8 @@ def transfer_alex(cp_folder):
         #nn.LogSoftmax(dim=1)
       )
 
+    model = model.to(device)
+
     print(f'loaded model >>> {model}')
     optimizer = optim.Adam(model.parameters(), lr=0.01)
     print(f'optimizer >>> {optimizer}')
@@ -226,12 +228,12 @@ if __name__ == "__main__":
     #cp_folder = "cp_testnet_pretrain"
     #train_mynet_with_whole_dataset(cp_folder)
 
-    #cp_folder = "cp_alex_transfer"
-    #transfer_alex(cp_folder)
+    cp_folder = "cp_alex224_transfer"
+    transfer_alex(cp_folder)
 
     #cp_folder = "cp_mynet_maintrain"
     #model_file = "./cp_mynet_pretrain/test_model_epoch_30.pth"
     #transfer_testnet(cp_folder, model_file)
 
-    cp_folder = "cp_mynet_normaltrain"
-    train_mynet_with_four_dataset(cp_folder)
+    #cp_folder = "cp_mynet_normaltrain"
+    #train_mynet_with_four_dataset(cp_folder)
